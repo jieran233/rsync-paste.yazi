@@ -12,7 +12,7 @@ local prepare_rsync = ya.sync(function()
 	end
 
 	for _, url in pairs(yanked) do
-		table.insert(operation.urls, url)
+		table.insert(operation.urls, tostring(url))
 	end
 
 	return operation
@@ -68,81 +68,72 @@ return {
 			level = 'info',
 		})
 
-		local success_count = 0
-
-		local file_count = 1
-
 		local component_id = render_rsync_paste_progress()
 
-		for _, url in ipairs(rsync_operation.urls) do
-			local url_str = tostring(url)
-			local filename = url.name
-			local command = Command('rsync'):arg({
+		local child, _ = Command('rsync')
+			:arg({
 				'-av',
 				'--info=progress2',
 			})
-
-			command = command:arg({
-				url_str,
-				rsync_operation.target_dir,
-			})
-
+			:arg(rsync_operation.urls)
+			:arg(rsync_operation.target_dir)
 			---@diagnostic disable: undefined-field
-			local child, _ = command:stdout(Command.PIPED):spawn()
+			:stdout(Command.PIPED)
 			---@diagnostic disable: undefined-field
+			:spawn()
 
-			while true do
-				---@diagnostic disable: need-check-nil
-				local data, event = child:read_line()
-				---@diagnostic disable: need-check-nil
-				if event == 2 then
-					break
-				elseif event == 0 then
-					if data:find('%%') then
-						local percentage = data:match('(%d+)%%')
-						if percentage then
-							local str = string.format(' %s file #%d: %s%% ', action, file_count, percentage)
-							update_rsync_paste_progress(str)
-						end
+		while true do
+			---@diagnostic disable: need-check-nil
+			local data, event = child:read_line()
+			---@diagnostic disable: need-check-nil
+			if event == 2 then
+				break
+			elseif event == 0 then
+				if data:find('%%') then
+					local percentage = data:match('(%d+)%%')
+					if percentage then
+						local str = string.format(' %s files: %s%% ', action, percentage)
+						update_rsync_paste_progress(str)
 					end
 				end
 			end
+		end
 
-			file_count = file_count + 1
+		local status, _ = child:wait()
 
-			local status, _ = child:wait()
+		if status and not status.success then
+			ya.notify({
+				title = 'rsync-paste',
+				content = string.format('%s to %s error', action, rsync_operation.target_dir),
+				timeout = 5,
+				level = 'error',
+			})
 
-			if status and not status.success then
-				ya.notify({
-					title = 'rsync-paste',
-					content = string.format('Failed to %s: %s', action:lower(), filename),
-					timeout = 5,
-					level = 'error',
-				})
-			else
-				success_count = success_count + 1
-				if rsync_operation.is_cut_operation then
-					local dir = url_str
-					local _, _ = Command('rm'):arg({
+			remove_rsync_paste_progress()
+
+			return
+		else
+			if rsync_operation.is_cut_operation then
+				local _, _ = Command('rm')
+					:arg({
 						'-rf',
-						dir,
-					}):status()
-				end
+					})
+					:arg(rsync_operation.urls)
+					:status()
 			end
 		end
 
 		ya.notify({
 			title = 'rsync-paste',
 			content = string.format(
-				'%s %d/%d files to: %s',
+				'%s %d files to %s done',
 				action,
-				success_count,
 				#rsync_operation.urls,
 				rsync_operation.target_dir
 			),
 			timeout = 5,
 
-			level = success_count == #rsync_operation.urls and 'info' or 'warn',
+			level = 'info',
 		})
 
 		remove_rsync_paste_progress(component_id)
