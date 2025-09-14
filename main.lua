@@ -72,7 +72,7 @@ return {
 
 		local child, _ = Command('rsync')
 			:arg({
-				'-av',
+				'-rlptDv',
 				'--info=progress2',
 			})
 			:arg(rsync_operation.urls)
