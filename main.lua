@@ -63,8 +63,8 @@ return {
 
 		ya.notify({
 			title = 'rsync-paste',
-			content = string.format('%s %d files...', action, #rsync_operation.urls),
-			timeout = 5,
+			content = string.format('%s %d files...\n(using `rsync -rlptDv`!)', action, #rsync_operation.urls),
+			timeout = 10,
 			level = 'info',
 		})
 
@@ -104,8 +104,8 @@ return {
 		if status and not status.success then
 			ya.notify({
 				title = 'rsync-paste',
-				content = string.format('%s to %s error', action, rsync_operation.target_dir),
-				timeout = 5,
+				content = string.format('%s to `%s` error', action, rsync_operation.target_dir),
+				timeout = 10,
 				level = 'error',
 			})
 
@@ -126,12 +126,12 @@ return {
 		ya.notify({
 			title = 'rsync-paste',
 			content = string.format(
-				'%s %d files to %s done',
+				'%s %d files to `%s` done',
 				action,
 				#rsync_operation.urls,
 				rsync_operation.target_dir
 			),
-			timeout = 5,
+			timeout = 10,
 
 			level = 'info',
 		})
