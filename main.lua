@@ -20,7 +20,7 @@ end)
 
 local update_rsync_paste_progress = ya.sync(function(_, str)
 	Header._rsync_paste_progress = str
-	ya.render()
+	ui.render()
 end)
 
 local render_rsync_paste_progress = ya.sync(function(_)
@@ -32,7 +32,7 @@ local render_rsync_paste_progress = ya.sync(function(_)
 
 	local component_id = Header:children_add('rsync_paste_progress', 1500, Header.RIGHT)
 
-	ya.render()
+	ui.render()
 
 	return component_id
 end)
@@ -42,7 +42,7 @@ local remove_rsync_paste_progress = ya.sync(function(_, id)
 
 	Header:children_remove(id, Header.RIGHT)
 
-	ya.render()
+	ui.render()
 end)
 
 return {
