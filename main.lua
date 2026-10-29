@@ -11,8 +11,8 @@ local prepare_rsync = ya.sync(function()
 		return operation
 	end
 
-	for _, url in pairs(yanked) do
-		table.insert(operation.urls, tostring(url))
+	for _, file in pairs(yanked) do
+		table.insert(operation.urls, tostring(file.url or file))
 	end
 
 	return operation
